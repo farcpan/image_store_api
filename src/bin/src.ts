@@ -1,26 +1,26 @@
 import { App } from 'aws-cdk-lib';
 import { ContextParameters } from '../utils/context';
 import { CognitoStack } from '../lib/cognito-stack';
-import { StringParameter } from 'aws-cdk-lib/aws-ssm';
+import { ApiStack } from '../lib/api-stack';
 
 const app = new App();
 const context = new ContextParameters(app);
 
-const cognitoStackId = context.getResourceId('cognito-stack');
-
-// ParameterStore
-const googleClientId = StringParameter.valueFromLookup(app, '/imagestore/google_oauth2_client_id');
-const googleClientSecret = StringParameter.valueFromLookup(
-	app,
-	'/imagestore/google_oauth2_client_secret'
-);
-
 // Cognito
-new CognitoStack(app, cognitoStackId, {
+const cognitoStackId = context.getResourceId('cognito-stack');
+const cognitoStack = new CognitoStack(app, cognitoStackId, {
 	env: {
 		region: context.stageParameters.region,
 	},
-	clientId: googleClientId,
-	clientSecret: googleClientSecret,
 	context: context,
+});
+
+// API
+const apiStackId = context.getResourceId('api-stack');
+new ApiStack(app, apiStackId, {
+	env: {
+		region: context.stageParameters.region,
+	},
+	context: context,
+	userPool: cognitoStack.userPool,
 });

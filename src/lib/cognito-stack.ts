@@ -1,16 +1,16 @@
-import { RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { CfnOutput, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import {
 	AccountRecovery,
+	OAuthScope,
 	UserPool,
 	UserPoolIdentityProviderGoogle,
 	ProviderAttribute,
+	UserPoolClientIdentityProvider,
 } from 'aws-cdk-lib/aws-cognito';
 import { ContextParameters } from '../utils/context';
 
 interface CognitoStackProps extends StackProps {
-	clientId: string;
-	clientSecret: string;
 	context: ContextParameters;
 }
 
@@ -18,12 +18,17 @@ interface CognitoStackProps extends StackProps {
  * Cognito
  */
 export class CognitoStack extends Stack {
+	userPool: UserPool;
+
 	constructor(scope: Construct, id: string, props: CognitoStackProps) {
 		super(scope, id, props);
 
+		// domain
+		const domainPrefix = 'imagestore-with-google';
+
 		// ユーザープール
 		const userPoolId = props.context.getResourceId('cognito-user-pool');
-		const userPool = new UserPool(this, userPoolId, {
+		this.userPool = new UserPool(this, userPoolId, {
 			userPoolName: userPoolId,
 
 			accountRecovery: AccountRecovery.EMAIL_ONLY,
@@ -38,18 +43,42 @@ export class CognitoStack extends Stack {
 			signInCaseSensitive: true,
 			signInAliases: { email: true },
 		});
+		this.userPool.addDomain(props.context.getResourceId('userpool-domain'), {
+			cognitoDomain: {
+				domainPrefix: domainPrefix,
+			},
+		});
+
+		const userPoolClientId: string = props.context.getResourceId('cognito-client');
+		const userPoolClient = this.userPool.addClient(userPoolClientId, {
+			userPoolClientName: userPoolClientId,
+			oAuth: {
+				flows: { authorizationCodeGrant: true },
+				callbackUrls: ['http://localhost:3000'],
+				logoutUrls: ['http://localhost:3000/logout'],
+				scopes: [OAuthScope.EMAIL, OAuthScope.OPENID, OAuthScope.PROFILE],
+			},
+			supportedIdentityProviders: [UserPoolClientIdentityProvider.GOOGLE],
+		});
 
 		const googleProviderId = props.context.getResourceId('google-provider');
 		const googleProvider = new UserPoolIdentityProviderGoogle(this, googleProviderId, {
-			userPool: userPool,
-			clientId: props.clientId,
-			clientSecret: props.clientSecret,
+			userPool: this.userPool,
+			clientId: 'hoge',
+			clientSecret: 'hoge',
 			scopes: ['email', 'profile'],
 			attributeMapping: {
 				email: ProviderAttribute.GOOGLE_EMAIL,
 				profilePicture: ProviderAttribute.GOOGLE_PICTURE,
 				fullname: ProviderAttribute.GOOGLE_NAME,
 			},
+		});
+		if (googleProvider) {
+			userPoolClient.node.addDependency(googleProvider);
+		}
+
+		new CfnOutput(this, props.context.getResourceId('domain'), {
+			value: `${domainPrefix}.auth.${this.region}.amazoncognito.com`,
 		});
 	}
 }
