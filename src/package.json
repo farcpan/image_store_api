@@ -9,9 +9,10 @@
 		"watch": "tsc -w",
 		"test": "jest",
 		"cdk": "cdk",
-		"dif-env1-dev": "cdk diff -c env=env1 -c stage=dev",
-		"dep-env1-dev-all": "cdk deploy --all -c env=env1 -c stage=dev --require-approval=never",
-		"des-env1-dev": "cdk destroy --all -c env=env1 -c stage=dev"
+		"deploy command for production environment": "--------------------------",
+		"dif-prd-all": "cdk diff -c stage=prd",
+		"dep-prd-all": "cdk deploy --all -c stage=prd --require-approval=never",
+		"des-prd-all": "cdk destroy --all -c stage=prd"
 	},
 	"devDependencies": {
 		"@types/jest": "^29.5.12",
@@ -26,6 +27,7 @@
 	},
 	"dependencies": {
 		"aws-cdk-lib": "2.137.0",
+		"axios": "^1.6.8",
 		"constructs": "^10.0.0",
 		"source-map-support": "^0.5.21"
 	}

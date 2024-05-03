@@ -17,6 +17,8 @@ import { UserPool } from 'aws-cdk-lib/aws-cognito';
 interface ApiStackProps extends StackProps {
 	context: ContextParameters;
 	userPool: UserPool;
+	userPoolClientId: string;
+	endpoint: string;
 }
 
 /**
@@ -30,6 +32,20 @@ export class ApiStack extends Stack {
 		// Nodejs Lambda
 		//////////////////////////////////////////////////////////////////////////////////
 		const nodejsLambdaFunctionPath = join(__dirname, '../nodejs_lambdas/index.ts');
+
+		const getTokenLambdaFunctionId = props.context.getResourceId('get-token-function');
+		const getTokenLambdaFunction = new NodejsFunction(this, getTokenLambdaFunctionId, {
+			functionName: getTokenLambdaFunctionId,
+			entry: nodejsLambdaFunctionPath,
+			handler: 'getTokenHandler',
+			runtime: Runtime.NODEJS_20_X,
+			timeout: Duration.seconds(10),
+			logRetention: RetentionDays.ONE_DAY,
+			environment: {
+				endpoint: props.endpoint,
+				clientId: props.userPoolClientId,
+			},
+		});
 
 		const sampleLambdaFunctionId = props.context.getResourceId('sample-function');
 		const sampleLambdaFunction = new NodejsFunction(this, sampleLambdaFunctionId, {
@@ -64,13 +80,16 @@ export class ApiStack extends Stack {
 			endpointTypes: [EndpointType.REGIONAL],
 		});
 
+		const getTokenLambdaFunctionIntegration = new LambdaIntegration(getTokenLambdaFunction);
 		const sampleLambdaFunctionIntegration = new LambdaIntegration(sampleLambdaFunction);
 
-		const getHashedPasswordApiResource = restApi.root.addResource('sample'); // /sample
+		const tokenResource = restApi.root.addResource('token'); // /token
+		const sampleApiResource = restApi.root.addResource('sample'); // /sample
 
-		getHashedPasswordApiResource.addMethod('GET', sampleLambdaFunctionIntegration, {
+		tokenResource.addMethod('POST', getTokenLambdaFunctionIntegration); // POST: /token
+		sampleApiResource.addMethod('GET', sampleLambdaFunctionIntegration, {
 			authorizer: authorizer,
-		});
+		}); // GET: /sample
 
 		//////////////////////////////////////////////////////////////////////////////////
 		// API URL

@@ -1,1 +1,4 @@
+# setting file with secret info
+src/cdk.prd.json
+
 .DS_Store

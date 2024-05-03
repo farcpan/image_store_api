@@ -19,12 +19,14 @@ interface CognitoStackProps extends StackProps {
  */
 export class CognitoStack extends Stack {
 	userPool: UserPool;
+	userPoolClientId: string;
+	endpoint: string;
 
 	constructor(scope: Construct, id: string, props: CognitoStackProps) {
 		super(scope, id, props);
 
-		// domain
-		const domainPrefix = 'imagestore-with-google';
+		const domainPrefix =
+			props.context.stageParameters.cognito.domainPrefix + '-' + props.context.stage;
 
 		// ユーザープール
 		const userPoolId = props.context.getResourceId('cognito-user-pool');
@@ -49,6 +51,7 @@ export class CognitoStack extends Stack {
 			},
 		});
 
+		// アプリケーションクライアント
 		const userPoolClientId: string = props.context.getResourceId('cognito-client');
 		const userPoolClient = this.userPool.addClient(userPoolClientId, {
 			userPoolClientName: userPoolClientId,
@@ -60,12 +63,14 @@ export class CognitoStack extends Stack {
 			},
 			supportedIdentityProviders: [UserPoolClientIdentityProvider.GOOGLE],
 		});
+		this.userPoolClientId = userPoolClient.userPoolClientId;
 
+		// GoogleIDプロバイダー
 		const googleProviderId = props.context.getResourceId('google-provider');
 		const googleProvider = new UserPoolIdentityProviderGoogle(this, googleProviderId, {
 			userPool: this.userPool,
-			clientId: 'hoge',
-			clientSecret: 'hoge',
+			clientId: props.context.stageParameters.cognito.google.clientId,
+			clientSecret: props.context.stageParameters.cognito.google.clientSecret,
 			scopes: ['email', 'profile'],
 			attributeMapping: {
 				email: ProviderAttribute.GOOGLE_EMAIL,
@@ -74,11 +79,16 @@ export class CognitoStack extends Stack {
 			},
 		});
 		if (googleProvider) {
+			// クライアントとProviderの構成順序を保証する必要がある
 			userPoolClient.node.addDependency(googleProvider);
 		}
 
-		new CfnOutput(this, props.context.getResourceId('domain'), {
-			value: `${domainPrefix}.auth.${this.region}.amazoncognito.com`,
+		//////////////////////////////////////////////////////////////////////////////////
+		// Cognito custom domain
+		//////////////////////////////////////////////////////////////////////////////////
+		this.endpoint = `https://${domainPrefix}.auth.${this.region}.amazoncognito.com/oauth2/token`;
+		new CfnOutput(this, props.context.getResourceId('token_endpoint'), {
+			value: this.endpoint,
 		});
 	}
 }

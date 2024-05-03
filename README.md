@@ -10,6 +10,12 @@ $ npm run dep-env1-dev-all
 
 ---
 
+### Google設定
+
+`OAuth 2.0 クライアント ID`の構成が必要。手順については省略。
+
+---
+
 ### Google OAuthクライアント情報登録
 
 AWSマネジメントコンソールを開き、Cognitoのページから`サインインエクスペリエンス`タブを開く。

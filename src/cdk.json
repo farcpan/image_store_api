@@ -61,8 +61,7 @@
 		"@aws-cdk/aws-kms:reduceCrossAccountRegionPolicyScope": true,
 
 		"systemName": "ImageStoreApi",
-		"env": "env1",
-		"stage": "dev",
+		"stage": "prd",
 		"version": "1.0.0"
 	}
 }

@@ -23,4 +23,6 @@ new ApiStack(app, apiStackId, {
 	},
 	context: context,
 	userPool: cognitoStack.userPool,
+	userPoolClientId: cognitoStack.userPoolClientId,
+	endpoint: cognitoStack.endpoint,
 });
