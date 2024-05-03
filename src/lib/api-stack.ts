@@ -2,8 +2,9 @@ import { CfnOutput, Duration, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { join } from 'path';
 import { ContextParameters } from '../utils/context';
-import { Runtime } from 'aws-cdk-lib/aws-lambda';
+import { DockerImageCode, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { DockerImageFunction } from 'aws-cdk-lib/aws-lambda';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import {
 	CognitoUserPoolsAuthorizer,
@@ -27,6 +28,20 @@ interface ApiStackProps extends StackProps {
 export class ApiStack extends Stack {
 	constructor(scope: Construct, id: string, props: ApiStackProps) {
 		super(scope, id, props);
+
+		//////////////////////////////////////////////////////////////////////////////////
+		// Python Lambda
+		//////////////////////////////////////////////////////////////////////////////////
+		const pythonLambdaFunctionId = props.context.getResourceId('python-lambda-function');
+		const pythonLambdaFunction = new DockerImageFunction(this, pythonLambdaFunctionId, {
+			functionName: pythonLambdaFunctionId,
+			code: DockerImageCode.fromImageAsset('python_lambdas/'),
+			timeout: Duration.minutes(5),
+			logRetention: RetentionDays.ONE_DAY,
+			environment: {
+				test: 'TestEnv',
+			},
+		});
 
 		//////////////////////////////////////////////////////////////////////////////////
 		// Nodejs Lambda
