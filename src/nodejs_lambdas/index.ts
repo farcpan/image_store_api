@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export const getTokenHandler = async (event: any, context: any) => {
 	const endpoint = process.env['endpoint'];
@@ -39,9 +41,66 @@ export const getTokenHandler = async (event: any, context: any) => {
 };
 
 export const getPresignedUrlHandler = async (event: any, context: any) => {
+	// env
+	const bucketName = process.env['bucketName'];
+	const body = event.body;
+	if (!body) {
+		return {
+			statusCode: 400,
+			body: JSON.stringify({ message: 'body is empty.' }),
+		};
+	}
+
+	// authorization header
+	const idToken: string | undefined = event.headers['Authorization'];
+	if (!idToken) {
+		return {
+			statusCode: 400,
+			body: JSON.stringify({ message: 'invalid id_token' }),
+		};
+	}
+	const splittedIdToken = idToken.split('.');
+	if (splittedIdToken.length !== 3) {
+		return {
+			statusCode: 400,
+			body: JSON.stringify({ message: 'invalid id_token format' }),
+		};
+	}
+	const decodedToken = Buffer.from(splittedIdToken[1], 'base64').toString();
+	const parsedDecodedToken = JSON.parse(decodedToken) as { sub: string };
+	const userId = parsedDecodedToken.sub;
+	if (!userId) {
+		return {
+			statusCode: 400,
+			body: JSON.stringify({ message: 'user_id (sub) cannot be obtained' }),
+		};
+	}
+
+	// request body
+	const parsedBody = JSON.parse(body) as { name: string };
+	if (!parsedBody.name) {
+		return {
+			statusCode: 400,
+			body: JSON.stringify({ message: 'name is empty.' }),
+		};
+	}
+	const objectName = parsedBody.name;
+
+	const s3Client = new S3Client();
+	const signedUrl = await getSignedUrl(
+		s3Client,
+		new PutObjectCommand({
+			Bucket: bucketName,
+			Key: `images/${userId}/${objectName}`,
+		}),
+		{ expiresIn: 120 } // expired in 2 min
+	);
+
 	return {
 		statusCode: 200,
-		body: JSON.stringify({ message: 'Hello World!' }),
+		body: JSON.stringify({
+			url: signedUrl,
+		}),
 	};
 };
 

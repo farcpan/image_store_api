@@ -15,7 +15,6 @@ import {
 } from 'aws-cdk-lib/aws-cloudfront';
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { Effect, PolicyStatement, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 
 interface CloudFrontStackProps extends StackProps {
 	context: ContextParameters;
@@ -170,7 +169,7 @@ export class CloudFrontStack extends Stack {
 
 		// Bucket Policy
 		const webappBucketPolicyStatement = new PolicyStatement({
-			actions: ['s3:GetObject'],
+			actions: ['s3:GetObject', 's3:PutObject'],
 			effect: Effect.ALLOW,
 			principals: [new ServicePrincipal('cloudfront.amazonaws.com')],
 			resources: [`${this.webappBucket.bucketArn}/*`],

@@ -26,6 +26,8 @@
 		"typescript": "~5.4.3"
 	},
 	"dependencies": {
+		"@aws-sdk/client-s3": "^3.569.0",
+		"@aws-sdk/s3-request-presigner": "^3.569.0",
 		"aws-cdk-lib": "2.137.0",
 		"axios": "^1.6.8",
 		"constructs": "^10.0.0",
