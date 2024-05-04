@@ -38,6 +38,13 @@ export const getTokenHandler = async (event: any, context: any) => {
 	}
 };
 
+export const getPresignedUrlHandler = async (event: any, context: any) => {
+	return {
+		statusCode: 200,
+		body: JSON.stringify({ message: 'Hello World!' }),
+	};
+};
+
 export const handler = async (event: any, context: any) => {
 	return {
 		statusCode: 200,

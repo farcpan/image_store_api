@@ -65,16 +65,22 @@ export class ApiStack extends Stack {
 			},
 		});
 
-		const sampleLambdaFunctionId = props.context.getResourceId('sample-function');
-		const sampleLambdaFunction = new NodejsFunction(this, sampleLambdaFunctionId, {
-			functionName: sampleLambdaFunctionId,
+		const getPresignedUrlFunctionId = props.context.getResourceId('get-presigned-url-function');
+		const getPresignedUrlFunction = new NodejsFunction(this, getPresignedUrlFunctionId, {
+			functionName: getPresignedUrlFunctionId,
 			entry: nodejsLambdaFunctionPath,
-			handler: 'handler',
+			handler: 'getPresignedUrlHandler',
 			runtime: Runtime.NODEJS_20_X,
 			timeout: Duration.seconds(10),
 			logRetention: RetentionDays.ONE_DAY,
+			environment: {
+				bucketName: props.imageBucket.bucketName,
+			},
 		});
 
+		//////////////////////////////////////////////////////////////////////////////////
+		// APIGateway
+		//////////////////////////////////////////////////////////////////////////////////
 		const authorizerId: string = props.context.getResourceId('authorizer');
 		const authorizer = new CognitoUserPoolsAuthorizer(this, authorizerId, {
 			authorizerName: authorizerId,
@@ -99,15 +105,15 @@ export class ApiStack extends Stack {
 		});
 
 		const getTokenLambdaFunctionIntegration = new LambdaIntegration(getTokenLambdaFunction);
-		const sampleLambdaFunctionIntegration = new LambdaIntegration(sampleLambdaFunction);
+		const getPresignedUrlFunctionIntegration = new LambdaIntegration(getPresignedUrlFunction);
 
 		const tokenResource = restApi.root.addResource('token'); // /token
-		const sampleApiResource = restApi.root.addResource('sample'); // /sample
+		const presignedResource = restApi.root.addResource('presigned'); // /presigned
 
 		tokenResource.addMethod('POST', getTokenLambdaFunctionIntegration); // POST: /token
-		sampleApiResource.addMethod('GET', sampleLambdaFunctionIntegration, {
+		presignedResource.addMethod('POST', getPresignedUrlFunctionIntegration, {
 			authorizer: authorizer,
-		}); // GET: /sample
+		}); // POST: /presigned
 
 		//////////////////////////////////////////////////////////////////////////////////
 		// API URL
