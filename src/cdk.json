@@ -60,7 +60,7 @@
 		"@aws-cdk/aws-codepipeline:defaultPipelineTypeToV2": true,
 		"@aws-cdk/aws-kms:reduceCrossAccountRegionPolicyScope": true,
 
-		"systemName": "ImageStoreApi",
+		"systemName": "image-store-api",
 		"stage": "prd",
 		"version": "1.0.0"
 	}

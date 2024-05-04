@@ -14,12 +14,14 @@ import {
 	RestApi,
 } from 'aws-cdk-lib/aws-apigateway';
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
+import { Bucket } from 'aws-cdk-lib/aws-s3';
 
 interface ApiStackProps extends StackProps {
 	context: ContextParameters;
 	userPool: UserPool;
 	userPoolClientId: string;
 	endpoint: string;
+	imageBucket: Bucket;
 }
 
 /**
@@ -42,6 +44,7 @@ export class ApiStack extends Stack {
 				test: 'TestEnv',
 			},
 		});
+		props.imageBucket.grantRead(pythonLambdaFunction);
 
 		//////////////////////////////////////////////////////////////////////////////////
 		// Nodejs Lambda
