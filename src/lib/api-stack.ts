@@ -77,6 +77,10 @@ export class ApiStack extends Stack {
 				bucketName: props.imageBucket.bucketName,
 			},
 		});
+		// 以下の権限を付与しないと、生成したURLでアップロードを実行できないので要注意
+		props.imageBucket.grantPutAcl(getPresignedUrlFunction);
+		props.imageBucket.grantPut(getPresignedUrlFunction);
+		props.imageBucket.grantRead(getPresignedUrlFunction);
 
 		//////////////////////////////////////////////////////////////////////////////////
 		// APIGateway
