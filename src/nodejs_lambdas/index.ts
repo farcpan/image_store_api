@@ -67,7 +67,7 @@ export const getPresignedUrlHandler = async (event: any, context: any) => {
 	}
 
 	// IDトークンから必要な情報を取得
-	const userInfo: UserInfo | string = getDecodedTokenInfo(event);
+	const userInfo: UserInfo | string = await getDecodedTokenInfo(event);
 	if (typeof userInfo === 'string') {
 		return {
 			statusCode: 401,
