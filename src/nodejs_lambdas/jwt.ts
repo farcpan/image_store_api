@@ -22,8 +22,9 @@ export const getDecodedTokenInfo = async (event: any): Promise<UserInfo | string
 	}
 
 	// using verification endpoint of Google
-	const verificationResult = await axios.post<{ email: string }>(verficationEndpoint + idToken);
-	if (verificationResult.status !== 200) {
+	try {
+		await axios.post<{ email: string }>(verficationEndpoint + idToken);
+	} catch (e) {
 		return 'failed to verificating id_token';
 	}
 
