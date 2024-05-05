@@ -50,8 +50,8 @@ export class ApiStack extends Stack {
 			timeout: Duration.seconds(10),
 			logRetention: RetentionDays.ONE_DAY,
 			environment: {
-				//endpoint: props.endpoint,
-				//clientId: props.userPoolClientId,
+				clientId: props.context.stageParameters.cognito.google.clientId,
+				clientSecret: props.context.stageParameters.cognito.google.clientSecret,
 			},
 		});
 
@@ -65,6 +65,8 @@ export class ApiStack extends Stack {
 			logRetention: RetentionDays.ONE_DAY,
 			environment: {
 				bucketName: props.imageBucket.bucketName,
+				clientId: props.context.stageParameters.cognito.google.clientId,
+				clientSecret: props.context.stageParameters.cognito.google.clientSecret,
 			},
 		});
 		// 以下の権限を付与しないと、生成したURLでアップロードを実行できないので要注意

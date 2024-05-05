@@ -2,14 +2,11 @@ import axios from 'axios';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
+/**
+ * Googleから取得した認可コードをIDトークンと交換する
+ */
 export const getTokenHandler = async (event: any, context: any) => {
-	const endpoint = process.env['endpoint'];
-	if (!endpoint) {
-		return {
-			statusCode: 500,
-			body: JSON.stringify({ message: 'no endpoint' }),
-		};
-	}
+	const endpoint = 'https://www.googleapis.com/oauth2/v4/token';
 	const clientId = process.env['clientId'];
 	if (!clientId) {
 		return {
@@ -17,17 +14,31 @@ export const getTokenHandler = async (event: any, context: any) => {
 			body: JSON.stringify({ message: 'no clientId' }),
 		};
 	}
+	const clientSecret = process.env['clientSecret'];
+	if (!clientSecret) {
+		return {
+			statusCode: 500,
+			body: JSON.stringify({ message: 'no clientSecret' }),
+		};
+	}
 
 	const body = event.body;
 	const parsedBody = JSON.parse(body) as { code: string };
 
 	try {
-		const params = new URLSearchParams();
-		params.append('grant_type', 'authorization_code');
-		params.append('client_id', clientId);
-		params.append('code', parsedBody.code);
-		params.append('redirect_uri', 'http://localhost:3000');
-		const result = await axios.post<{ id_token: string }>(endpoint, params);
+		const requestBody = JSON.stringify({
+			code: parsedBody.code,
+			client_id: clientId,
+			client_secret: clientSecret,
+			grant_type: 'authorization_code',
+			redirect_uri: 'http://localhost:3000',
+		});
+		const headers = {
+			'Content-Type': 'application/json',
+		};
+		const result = await axios.post<{ id_token: string }>(endpoint, requestBody, {
+			headers: headers,
+		});
 		return {
 			statusCode: 200,
 			body: JSON.stringify({ idToken: result.data.id_token }),
