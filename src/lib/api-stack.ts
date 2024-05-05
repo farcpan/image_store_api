@@ -6,21 +6,11 @@ import { DockerImageCode, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { DockerImageFunction } from 'aws-cdk-lib/aws-lambda';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
-import {
-	CognitoUserPoolsAuthorizer,
-	Cors,
-	EndpointType,
-	LambdaIntegration,
-	RestApi,
-} from 'aws-cdk-lib/aws-apigateway';
-import { UserPool } from 'aws-cdk-lib/aws-cognito';
+import { Cors, EndpointType, LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 
 interface ApiStackProps extends StackProps {
 	context: ContextParameters;
-	userPool: UserPool;
-	userPoolClientId: string;
-	endpoint: string;
 	imageBucket: Bucket;
 }
 
@@ -60,8 +50,8 @@ export class ApiStack extends Stack {
 			timeout: Duration.seconds(10),
 			logRetention: RetentionDays.ONE_DAY,
 			environment: {
-				endpoint: props.endpoint,
-				clientId: props.userPoolClientId,
+				//endpoint: props.endpoint,
+				//clientId: props.userPoolClientId,
 			},
 		});
 
