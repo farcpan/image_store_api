@@ -21,3 +21,8 @@ export interface StageParameters {
 
 ---
 
+## 参考
+
+* [OpenID Connect の JWT の署名を自力で検証してみると見えてきた公開鍵暗号の実装の話](https://qiita.com/bobunderson/items/d48f89e2b3e6ad9f9c4c)
+
+---

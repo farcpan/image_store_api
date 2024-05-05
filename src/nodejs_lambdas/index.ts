@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { getDecodedTokenInfo, UserInfo } from './jwt';
 
 /**
  * Googleから取得した認可コードをIDトークンと交換する
@@ -51,6 +52,9 @@ export const getTokenHandler = async (event: any, context: any) => {
 	}
 };
 
+/**
+ * S3に対してアップロードを実行する署名付きURLを発行する
+ */
 export const getPresignedUrlHandler = async (event: any, context: any) => {
 	// env
 	const bucketName = process.env['bucketName'];
@@ -62,30 +66,16 @@ export const getPresignedUrlHandler = async (event: any, context: any) => {
 		};
 	}
 
-	// authorization header
-	const idToken: string | undefined = event.headers['Authorization'];
-	if (!idToken) {
+	// IDトークンから必要な情報を取得
+	const userInfo: UserInfo | string = getDecodedTokenInfo(event);
+	if (typeof userInfo === 'string') {
 		return {
-			statusCode: 400,
-			body: JSON.stringify({ message: 'invalid id_token' }),
+			statusCode: 401,
+			body: JSON.stringify({ message: userInfo }),
 		};
 	}
-	const splittedIdToken = idToken.split('.');
-	if (splittedIdToken.length !== 3) {
-		return {
-			statusCode: 400,
-			body: JSON.stringify({ message: 'invalid id_token format' }),
-		};
-	}
-	const decodedToken = Buffer.from(splittedIdToken[1], 'base64').toString();
-	const parsedDecodedToken = JSON.parse(decodedToken) as { sub: string };
-	const userId = parsedDecodedToken.sub;
-	if (!userId) {
-		return {
-			statusCode: 400,
-			body: JSON.stringify({ message: 'user_id (sub) cannot be obtained' }),
-		};
-	}
+
+	const userId = userInfo.sub;
 
 	// request body
 	const parsedBody = JSON.parse(body) as { name: string };
