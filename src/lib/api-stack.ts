@@ -85,15 +85,6 @@ export class ApiStack extends Stack {
 		//////////////////////////////////////////////////////////////////////////////////
 		// APIGateway
 		//////////////////////////////////////////////////////////////////////////////////
-		const authorizerId: string = props.context.getResourceId('authorizer');
-		const authorizer = new CognitoUserPoolsAuthorizer(this, authorizerId, {
-			authorizerName: authorizerId,
-			cognitoUserPools: [props.userPool], // 事前に作成したユーザープールを設定する
-		});
-
-		//////////////////////////////////////////////////////////////////////////////////
-		// APIGateway
-		//////////////////////////////////////////////////////////////////////////////////
 		const stageName: string = 'v1';
 		const restApiId = props.context.getResourceId('rest-api');
 		const restApi = new RestApi(this, restApiId, {
@@ -115,9 +106,7 @@ export class ApiStack extends Stack {
 		const presignedResource = restApi.root.addResource('presigned'); // /presigned
 
 		tokenResource.addMethod('POST', getTokenLambdaFunctionIntegration); // POST: /token
-		presignedResource.addMethod('POST', getPresignedUrlFunctionIntegration, {
-			authorizer: authorizer,
-		}); // POST: /presigned
+		presignedResource.addMethod('POST', getPresignedUrlFunctionIntegration); // POST: /presigned
 
 		//////////////////////////////////////////////////////////////////////////////////
 		// API URL
