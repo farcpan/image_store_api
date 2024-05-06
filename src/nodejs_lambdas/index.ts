@@ -34,7 +34,7 @@ export const getTokenHandler = async (event: any, context: any) => {
 			client_id: clientId,
 			client_secret: clientSecret,
 			grant_type: 'authorization_code',
-			redirect_uri: 'http://localhost:3000',
+			redirect_uri: 'http://localhost:5173',
 		});
 		const headers = {
 			'Content-Type': 'application/json',
