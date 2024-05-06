@@ -9,7 +9,9 @@ import {
 	CfnOriginAccessControl,
 	Distribution,
 	HttpVersion,
+	KeyGroup,
 	PriceClass,
+	PublicKey,
 	ResponseHeadersPolicy,
 	ViewerProtocolPolicy,
 } from 'aws-cdk-lib/aws-cloudfront';
@@ -72,6 +74,19 @@ export class CloudFrontStack extends Stack {
 		});
 
 		//////////////////////////////////////////////////////////////////////////////////
+		// Key for signed url
+		//////////////////////////////////////////////////////////////////////////////////
+		// keygroup
+		const publicKeyId: string = props.context.getResourceId('cf-public-key');
+		const publicKey = PublicKey.fromPublicKeyId(
+			this,
+			publicKeyId,
+			props.context.stageParameters.cloudfront.publicKeyId // 事前に作成した公開鍵のID
+		);
+		const keyGroupId: string = props.context.getResourceId('cf-key-group');
+		const keyGroup = new KeyGroup(this, keyGroupId, { items: [publicKey] });
+
+		//////////////////////////////////////////////////////////////////////////////////
 		// CloudFront
 		//////////////////////////////////////////////////////////////////////////////////
 		const distributionId = props.context.getResourceId('cloudfront-distribution');
@@ -108,7 +123,7 @@ export class CloudFrontStack extends Stack {
 					),
 					viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
 					responseHeadersPolicy: ResponseHeadersPolicy.SECURITY_HEADERS,
-					// trustedKeyGroups: [keyGroup], // 署名付きURL発行用
+					trustedKeyGroups: [keyGroup], // 署名付きURL発行用
 				},
 			},
 			errorResponses: [

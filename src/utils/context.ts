@@ -3,12 +3,12 @@ import { readFileSync } from 'fs';
 
 export interface StageParameters {
 	region: string;
-	cognito: {
-		google: {
-			clientId: string;
-			clientSecret: string;
-		};
-		domainPrefix: string;
+	google: {
+		clientId: string;
+		clientSecret: string;
+	};
+	cloudfront: {
+		publicKeyId: string;
 	};
 }
 export class ContextParameters {
