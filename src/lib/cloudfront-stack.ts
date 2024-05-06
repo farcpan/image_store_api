@@ -73,6 +73,20 @@ export class CloudFrontStack extends Stack {
 				description: 'Access Control for Image Bucket',
 			},
 		});
+		const originAccessControlForWebAppId = props.context.getResourceId('webapp-bucket-oac');
+		const originAccessControlForWebApp = new CfnOriginAccessControl(
+			this,
+			originAccessControlForWebAppId,
+			{
+				originAccessControlConfig: {
+					name: originAccessControlForWebAppId,
+					originAccessControlOriginType: 's3',
+					signingBehavior: 'always',
+					signingProtocol: 'sigv4',
+					description: 'Access Control for Webapp Bucket',
+				},
+			}
+		);
 
 		//////////////////////////////////////////////////////////////////////////////////
 		// Key for signed url
@@ -181,7 +195,7 @@ export class CloudFrontStack extends Stack {
 		);
 		cfnDistribution.addPropertyOverride(
 			'DistributionConfig.Origins.1.OriginAccessControlId',
-			originAccessControl.getAtt('Id')
+			originAccessControlForWebApp.getAtt('Id')
 		);
 
 		// Bucket Policy
