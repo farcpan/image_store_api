@@ -23,4 +23,6 @@ new ApiStack(app, apiStackId, {
 	},
 	context: context,
 	imageBucket: cloudfrontStack.imageBucket,
+	keyBucket: cloudfrontStack.keyBucket,
+	domainName: cloudfrontStack.cloudfrontDomainName,
 });

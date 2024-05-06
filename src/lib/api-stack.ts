@@ -12,6 +12,8 @@ import { Bucket } from 'aws-cdk-lib/aws-s3';
 interface ApiStackProps extends StackProps {
 	context: ContextParameters;
 	imageBucket: Bucket;
+	keyBucket: Bucket;
+	domainName: string;
 }
 
 /**
@@ -55,6 +57,30 @@ export class ApiStack extends Stack {
 			},
 		});
 
+		const publishPresignedUrlForImageFunctionId = props.context.getResourceId(
+			'publish-presigned-url-for-image-function'
+		);
+		const publishPresignedUrlForImageFunction = new NodejsFunction(
+			this,
+			publishPresignedUrlForImageFunctionId,
+			{
+				functionName: publishPresignedUrlForImageFunctionId,
+				entry: nodejsLambdaFunctionPath,
+				handler: 'publishPresignedUrlForImageHandler',
+				runtime: Runtime.NODEJS_20_X,
+				timeout: Duration.seconds(10),
+				logRetention: RetentionDays.ONE_DAY,
+				environment: {
+					keyBucketName: props.keyBucket.bucketName,
+					imageBucketName: props.imageBucket.bucketName,
+					domainName: props.domainName,
+					publicKeyId: props.context.stageParameters.cloudfront.publicKeyId,
+				},
+			}
+		);
+		props.keyBucket.grantRead(publishPresignedUrlForImageFunction);
+		props.imageBucket.grantRead(publishPresignedUrlForImageFunction);
+
 		const getPresignedUrlFunctionId = props.context.getResourceId('get-presigned-url-function');
 		const getPresignedUrlFunction = new NodejsFunction(this, getPresignedUrlFunctionId, {
 			functionName: getPresignedUrlFunctionId,
@@ -65,8 +91,6 @@ export class ApiStack extends Stack {
 			logRetention: RetentionDays.ONE_DAY,
 			environment: {
 				bucketName: props.imageBucket.bucketName,
-				clientId: props.context.stageParameters.google.clientId,
-				clientSecret: props.context.stageParameters.google.clientSecret,
 			},
 		});
 		// 以下の権限を付与しないと、生成したURLでアップロードを実行できないので要注意
@@ -93,12 +117,17 @@ export class ApiStack extends Stack {
 
 		const getTokenLambdaFunctionIntegration = new LambdaIntegration(getTokenLambdaFunction);
 		const getPresignedUrlFunctionIntegration = new LambdaIntegration(getPresignedUrlFunction);
+		const publishPresignedUrlForImageFunctionIntegration = new LambdaIntegration(
+			publishPresignedUrlForImageFunction
+		);
 
 		const tokenResource = restApi.root.addResource('token'); // /token
 		const presignedResource = restApi.root.addResource('presigned'); // /presigned
+		const imageResource = restApi.root.addResource('image'); // /image
 
 		tokenResource.addMethod('POST', getTokenLambdaFunctionIntegration); // POST: /token
 		presignedResource.addMethod('POST', getPresignedUrlFunctionIntegration); // POST: /presigned
+		imageResource.addMethod('POST', publishPresignedUrlForImageFunctionIntegration); // POST: /image
 
 		//////////////////////////////////////////////////////////////////////////////////
 		// API URL

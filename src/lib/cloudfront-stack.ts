@@ -29,6 +29,7 @@ export class CloudFrontStack extends Stack {
 	webappBucket: Bucket;
 	imageBucket: Bucket;
 	keyBucket: Bucket;
+	cloudfrontDomainName: string;
 
 	constructor(scope: Construct, id: string, props: CloudFrontStackProps) {
 		super(scope, id, props);
@@ -143,6 +144,7 @@ export class CloudFrontStack extends Stack {
 			httpVersion: HttpVersion.HTTP2,
 			priceClass: PriceClass.PRICE_CLASS_200,
 		});
+		this.cloudfrontDomainName = distribution.distributionDomainName;
 
 		const cfnDistribution = distribution.node.defaultChild as CfnDistribution;
 

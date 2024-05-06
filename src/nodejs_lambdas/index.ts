@@ -1,5 +1,7 @@
 import axios from 'axios';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+// @ts-ignore
+import { getSignedUrl as getSignedUrlOfCf } from 'aws-cloudfront-sign';
+import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getDecodedTokenInfo, UserInfo } from './jwt';
 
@@ -53,11 +55,94 @@ export const getTokenHandler = async (event: any, context: any) => {
 };
 
 /**
+ * 画像アクセス用署名付きURLを発行する
+ */
+export const publishPresignedUrlForImageHandler = async (event: any, context: any) => {
+	// env
+	const keyBucketName = process.env['keyBucketName'];
+	if (!keyBucketName) {
+		return {
+			statusCode: 500,
+			body: JSON.stringify({ message: 'key bucketName not defined' }),
+		};
+	}
+	const imageBucketName = process.env['imageBucketName'];
+	if (!imageBucketName) {
+		return {
+			statusCode: 500,
+			body: JSON.stringify({ message: 'image bucketName not defined' }),
+		};
+	}
+	const domainName = process.env['domainName'];
+	if (!domainName) {
+		return {
+			statusCode: 500,
+			body: JSON.stringify({ message: 'domainName not defined' }),
+		};
+	}
+	const publicKeyId = process.env['publicKeyId'];
+	if (!publicKeyId) {
+		return {
+			statusCode: 500,
+			body: JSON.stringify({ message: 'publicKeyId not defined' }),
+		};
+	}
+
+	// リクエスト
+	const body = event.body;
+	if (!body) {
+		return {
+			statusCode: 400,
+			body: JSON.stringify({ message: 'empty body' }),
+		};
+	}
+	const parsedBody = JSON.parse(body) as { objectKey: string };
+	const objectKey = parsedBody.objectKey; // S3キー
+
+	// S3アクセス
+	const s3Client = new S3Client();
+
+	// 秘密鍵取得
+	const privateKey = await getPrivateKey(s3Client, keyBucketName);
+	if (!privateKey) {
+		return {
+			statusCode: 500,
+			body: JSON.stringify({ message: 'private key cannot be obtained.' }),
+		};
+	}
+
+	// 署名付きURL生成
+	try {
+		const objectUrl = `https://${domainName}/${objectKey}`;
+		const signedUrl = await getSignedUrlOfCloudFront(publicKeyId, objectUrl, privateKey);
+		return {
+			statusCode: 200,
+			body: JSON.stringify({
+				url: signedUrl,
+			}),
+		};
+	} catch (e) {
+		return {
+			statusCode: 500,
+			body: JSON.stringify({ message: JSON.stringify(e) }),
+		};
+	}
+};
+
+/**
  * S3に対してアップロードを実行する署名付きURLを発行する
  */
 export const getPresignedUrlHandler = async (event: any, context: any) => {
 	// env
 	const bucketName = process.env['bucketName'];
+	if (!bucketName) {
+		return {
+			statusCode: 500,
+			body: JSON.stringify({ message: 'no env' }),
+		};
+	}
+
+	// リクエスト
 	const body = event.body;
 	if (!body) {
 		return {
@@ -110,4 +195,46 @@ export const handler = async (event: any, context: any) => {
 		statusCode: 200,
 		body: JSON.stringify({ message: 'Hello World!' }),
 	};
+};
+
+// S3から秘密鍵を取得する
+const getPrivateKey = async (s3Client: S3Client, bucketName: string): Promise<string | null> => {
+	try {
+		const result = await s3Client.send(
+			new GetObjectCommand({
+				Bucket: bucketName,
+				Key: 'private_key.pem',
+			})
+		);
+		const text = result.Body?.transformToString('utf-8');
+		if (!text) {
+			throw new Error('body is empty.');
+		}
+
+		return text;
+	} catch (e) {
+		return null;
+	}
+};
+
+// 署名付きURL発行
+const getSignedUrlOfCloudFront = async (
+	keyPairId: string,
+	objectUrl: string,
+	privateKeyValue: string
+): Promise<string> => {
+	return new Promise(async (resolve: (value: string) => void, reject: (reason: any) => void) => {
+		try {
+			// 秘密鍵を使って署名付きURL生成
+			const signedUrl = getSignedUrlOfCf(objectUrl, {
+				keypairId: keyPairId,
+				expireTime: new Date().getTime() + 30000, // 30,000 [msec]
+				privateKeyString: privateKeyValue,
+			}) as string;
+
+			resolve(signedUrl);
+		} catch (e) {
+			reject(e);
+		}
+	});
 };
