@@ -88,6 +88,17 @@ export const publishPresignedUrlForImageHandler = async (event: any, context: an
 		};
 	}
 
+	// IDトークン
+	const userInfo: UserInfo | string = await getDecodedTokenInfo(event);
+	if (typeof userInfo === 'string') {
+		return {
+			statusCode: 401,
+			body: JSON.stringify({ message: userInfo }),
+		};
+	}
+
+	const userId = userInfo.sub;
+
 	// リクエスト
 	const body = event.body;
 	if (!body) {
@@ -97,7 +108,7 @@ export const publishPresignedUrlForImageHandler = async (event: any, context: an
 		};
 	}
 	const parsedBody = JSON.parse(body) as { objectKey: string };
-	const objectKey = parsedBody.objectKey; // S3キー
+	const objectKey = parsedBody.objectKey; // S3キー。ただし、 images/{userId}までは固定であるためリクエストに含めない
 
 	// S3アクセス
 	const s3Client = new S3Client();
@@ -113,7 +124,7 @@ export const publishPresignedUrlForImageHandler = async (event: any, context: an
 
 	// 署名付きURL生成
 	try {
-		const objectUrl = `https://${domainName}/${objectKey}`;
+		const objectUrl = `https://${domainName}/images/${userId}/${objectKey}`;
 		const signedUrl = await getSignedUrlOfCloudFront(publicKeyId, objectUrl, privateKey);
 		return {
 			statusCode: 200,
