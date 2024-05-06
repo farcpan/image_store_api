@@ -160,6 +160,10 @@ export class CloudFrontStack extends Stack {
 		});
 		this.cloudfrontDomainName = distribution.distributionDomainName;
 
+		//////////////////////////////////////////////////////////////////////////////////
+		// CloudFront OAC設定
+		// - 優先度順位 0 -> webapp, 1 -> image
+		//////////////////////////////////////////////////////////////////////////////////
 		const cfnDistribution = distribution.node.defaultChild as CfnDistribution;
 
 		// Delete OAI
@@ -184,23 +188,23 @@ export class CloudFrontStack extends Stack {
 			this.webappBucket.bucketRegionalDomainName
 		);
 		cfnDistribution.addPropertyOverride(
-			'DistributionConfig.Origins.0.DomainName',
+			'DistributionConfig.Origins.1.DomainName',
 			this.imageBucket.bucketRegionalDomainName
 		);
 
 		// OAC Settings
 		cfnDistribution.addPropertyOverride(
 			'DistributionConfig.Origins.0.OriginAccessControlId',
-			originAccessControl.getAtt('Id')
+			originAccessControlForWebApp.getAtt('Id')
 		);
 		cfnDistribution.addPropertyOverride(
 			'DistributionConfig.Origins.1.OriginAccessControlId',
-			originAccessControlForWebApp.getAtt('Id')
+			originAccessControl.getAtt('Id')
 		);
 
 		// Bucket Policy
 		const webappBucketPolicyStatement = new PolicyStatement({
-			actions: ['s3:GetObject', 's3:PutObject'],
+			actions: ['s3:GetObject'],
 			effect: Effect.ALLOW,
 			principals: [new ServicePrincipal('cloudfront.amazonaws.com')],
 			resources: [`${this.webappBucket.bucketArn}/*`],
