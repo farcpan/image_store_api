@@ -14,6 +14,10 @@ export const getTokenHandler = async (event: any, context: any) => {
 	if (!clientId) {
 		return {
 			statusCode: 500,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: 'no clientId' }),
 		};
 	}
@@ -21,6 +25,10 @@ export const getTokenHandler = async (event: any, context: any) => {
 	if (!clientSecret) {
 		return {
 			statusCode: 500,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: 'no clientSecret' }),
 		};
 	}
@@ -34,7 +42,7 @@ export const getTokenHandler = async (event: any, context: any) => {
 			client_id: clientId,
 			client_secret: clientSecret,
 			grant_type: 'authorization_code',
-			redirect_uri: 'http://localhost:5173',
+			redirect_uri: 'http://localhost:5173/login',
 		});
 		const headers = {
 			'Content-Type': 'application/json',
@@ -44,11 +52,19 @@ export const getTokenHandler = async (event: any, context: any) => {
 		});
 		return {
 			statusCode: 200,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ idToken: result.data.id_token }),
 		};
 	} catch (e) {
 		return {
 			statusCode: 500,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify(e),
 		};
 	}
@@ -63,6 +79,10 @@ export const publishPresignedUrlForImageHandler = async (event: any, context: an
 	if (!keyBucketName) {
 		return {
 			statusCode: 500,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: 'key bucketName not defined' }),
 		};
 	}
@@ -70,6 +90,10 @@ export const publishPresignedUrlForImageHandler = async (event: any, context: an
 	if (!imageBucketName) {
 		return {
 			statusCode: 500,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: 'image bucketName not defined' }),
 		};
 	}
@@ -77,6 +101,10 @@ export const publishPresignedUrlForImageHandler = async (event: any, context: an
 	if (!domainName) {
 		return {
 			statusCode: 500,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: 'domainName not defined' }),
 		};
 	}
@@ -84,6 +112,10 @@ export const publishPresignedUrlForImageHandler = async (event: any, context: an
 	if (!publicKeyId) {
 		return {
 			statusCode: 500,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: 'publicKeyId not defined' }),
 		};
 	}
@@ -93,6 +125,10 @@ export const publishPresignedUrlForImageHandler = async (event: any, context: an
 	if (typeof userInfo === 'string') {
 		return {
 			statusCode: 401,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: userInfo }),
 		};
 	}
@@ -104,6 +140,10 @@ export const publishPresignedUrlForImageHandler = async (event: any, context: an
 	if (!body) {
 		return {
 			statusCode: 400,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: 'empty body' }),
 		};
 	}
@@ -118,6 +158,10 @@ export const publishPresignedUrlForImageHandler = async (event: any, context: an
 	if (!privateKey) {
 		return {
 			statusCode: 500,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: 'private key cannot be obtained.' }),
 		};
 	}
@@ -128,6 +172,10 @@ export const publishPresignedUrlForImageHandler = async (event: any, context: an
 		const signedUrl = await getSignedUrlOfCloudFront(publicKeyId, objectUrl, privateKey);
 		return {
 			statusCode: 200,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({
 				url: signedUrl,
 			}),
@@ -135,6 +183,10 @@ export const publishPresignedUrlForImageHandler = async (event: any, context: an
 	} catch (e) {
 		return {
 			statusCode: 500,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: JSON.stringify(e) }),
 		};
 	}
@@ -149,6 +201,10 @@ export const getPresignedUrlHandler = async (event: any, context: any) => {
 	if (!bucketName) {
 		return {
 			statusCode: 500,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: 'no env' }),
 		};
 	}
@@ -158,6 +214,10 @@ export const getPresignedUrlHandler = async (event: any, context: any) => {
 	if (!body) {
 		return {
 			statusCode: 400,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: 'body is empty.' }),
 		};
 	}
@@ -167,6 +227,10 @@ export const getPresignedUrlHandler = async (event: any, context: any) => {
 	if (typeof userInfo === 'string') {
 		return {
 			statusCode: 401,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: userInfo }),
 		};
 	}
@@ -178,6 +242,10 @@ export const getPresignedUrlHandler = async (event: any, context: any) => {
 	if (!parsedBody.name) {
 		return {
 			statusCode: 400,
+			headers: {
+				'Access-Control-Allow-Origin': '*',
+				'Content-Type': 'application/json; charset=utf-8',
+			},
 			body: JSON.stringify({ message: 'name is empty.' }),
 		};
 	}
@@ -195,6 +263,10 @@ export const getPresignedUrlHandler = async (event: any, context: any) => {
 
 	return {
 		statusCode: 200,
+		headers: {
+			'Access-Control-Allow-Origin': '*',
+			'Content-Type': 'application/json; charset=utf-8',
+		},
 		body: JSON.stringify({
 			url: signedUrl,
 		}),
@@ -204,6 +276,10 @@ export const getPresignedUrlHandler = async (event: any, context: any) => {
 export const handler = async (event: any, context: any) => {
 	return {
 		statusCode: 200,
+		headers: {
+			'Access-Control-Allow-Origin': '*',
+			'Content-Type': 'application/json; charset=utf-8',
+		},
 		body: JSON.stringify({ message: 'Hello World!' }),
 	};
 };
