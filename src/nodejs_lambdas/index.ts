@@ -37,13 +37,13 @@ export const getTokenHandler = async (event: any, context: any) => {
 	const parsedBody = JSON.parse(body) as { code: string };
 
 	try {
-		const requestBody = JSON.stringify({
+		const requestBody = {
 			code: parsedBody.code,
 			client_id: clientId,
 			client_secret: clientSecret,
 			grant_type: 'authorization_code',
 			redirect_uri: 'http://localhost:5173/login',
-		});
+		};
 		const headers = {
 			'Content-Type': 'application/json',
 		};
